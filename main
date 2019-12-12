@@ -1,0 +1,85 @@
+MartialKnowledge = {
+	name = "MartialKnowledge",
+	version = "0.0.2",
+
+	varVersion = 1, -- savedVariables version
+	uiLocked = true,
+	defaultSettings = {
+	},
+}
+
+local MK = MartialKnowledge
+local EM = EVENT_MANAGER
+local count = 0
+
+local strformat = string.format
+
+local function Initialize()
+
+	MK.sv = ZO_SavedVars:New("MartialKnowledgeSV", MK.varVersion, nil, MK.defaultSettings)
+	MK.RestorePosition()
+
+	local eventName = MK.name .. "Proc"
+	EM:RegisterForEvent(eventName, EVENT_COMBAT_EVENT, MK.Proc)
+	EM:AddFilterForEvent(eventName, EVENT_COMBAT_EVENT, REGISTER_FILTER_ABILITY_ID, 127070)
+	EM:AddFilterForEvent(eventName, EVENT_COMBAT_EVENT, REGISTER_FILTER_COMBAT_RESULT, ACTION_RESULT_EFFECT_GAINED)
+	EM:AddFilterForEvent(eventName, EVENT_COMBAT_EVENT, REGISTER_FILTER_SOURCE_COMBAT_UNIT_TYPE, COMBAT_UNIT_TYPE_PLAYER)
+
+	EM:UnregisterForUpdate(MK.name .. "Tick")
+	EM:RegisterForUpdate(MK.name .. "Tick", 200, MK.Tick)
+
+end
+
+function MK.Proc(eventCode, result, isError, abilityName, abilityGraphic, abilityActionSlotType, sourceName, sourceType, targetName, targetType, hitValue, powerType, damageType, log, sourceUnitId, targetUnitId, abilityId)
+
+	count = 8000
+	MK.Tick()
+
+end
+
+function MK.Tick()
+
+	local s, smax = GetUnitPower('player', POWERTYPE_STAMINA)
+	local p = 100 * s / smax
+	local color = p < 50 and 'FFFF00' or '00FF00'
+	MartialKnowledgeControl_Stam:SetText(strformat('|c%s%d|r', color, p))
+
+	if count <= 0 then
+		--EM:UnregisterForUpdate(MK.name .. "Tick")
+		MartialKnowledgeControl_Label:SetText('|c00FFFF0|r')
+	else
+		color = count > 3000 and '00FFFF' or 'FFFF00'
+		MartialKnowledgeControl_Label:SetText(strformat('|c%s%0.1f|r', color, count / 1000))
+	end
+	count = count - 200
+
+end
+
+function MK.Move()
+
+	MK.sv.win1CenterX, MK.sv.win1CenterY = MartialKnowledgeControl:GetCenter()
+
+	MartialKnowledgeControl:ClearAnchors()
+	MartialKnowledgeControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, MK.sv.win1CenterX, MK.sv.win1CenterY)
+
+end
+
+function MK.RestorePosition()
+
+	local win1CenterX = MK.sv.win1CenterX
+	local win1CenterY = MK.sv.win1CenterY
+
+	if win1CenterX or win1CenterY then
+		MartialKnowledgeControl:ClearAnchors()
+		MartialKnowledgeControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, win1CenterX, win1CenterY)
+	end
+
+end
+
+local function OnAddOnLoaded(event, addonName)
+	if addonName == MK.name then
+		Initialize()
+	end
+end
+
+EVENT_MANAGER:RegisterForEvent(MK.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)

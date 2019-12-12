@@ -1,0 +1,9 @@
+## Title: MartialKnowledge
+## Description: Tracks stamina and notifies you when below 50% to proc MK using LA's
+## Version: 1.0.0
+## APIVersion: 100029
+## Author: EternalSessions6
+## SavedVariables: MartialKnowledgeSV
+
+main.lua
+ui.xml
